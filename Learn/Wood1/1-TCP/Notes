@@ -1,0 +1,74 @@
+
+
+TCP & Python Socket Cheat Sheet
+
+Socket basics
+
+A socket = software endpoint for communication (IP + Port + Protocol)
+
+Default in Python: IPv4 + TCP
+
+TCP vs UDP
+
+TCP: reliable, ordered, uses 3-way handshake
+
+UDP: fast, no handshake, unreliable
+
+TCP 3-Way Handshake
+
+Client -> Server: SYN
+
+Server -> Client: SYN-ACK
+
+Client -> Server: ACK
+(handled automatically by OS, not shown in Python code)
+
+Key Python socket methods
+
+socket.socket() = create new socket
+
+bind((ip, port)) = attach socket to IP/port
+
+listen(backlog) = start listening, backlog = queue size
+
+accept() = block until client connects, returns (conn, addr)
+
+recv(n) = receive up to n bytes
+
+sendall(data) = send data reliably
+
+close() = close socket
+
+accept() breakdown
+
+conn = new socket for this client
+
+addr = (client_ip, client_port)
+
+tcpdump command
+sudo tcpdump -n -i lo tcp port 9000 -w handshake.pcap
+
+see the output:
+tcpdump -r handshake.pcap -n -vv
+
+Options explained:
+
+-n = no DNS resolution
+
+-i lo = listen on loopback interface
+
+tcp port 9000 = filter for TCP traffic on port 9000
+
+-w file = write packets to file for Wireshark
+
+Workflow
+
+Server: create socket -> bind -> listen -> accept
+
+Client: create socket -> connect
+
+OS: performs handshake
+
+Then: send/recv data
+
+Finally: close sockets

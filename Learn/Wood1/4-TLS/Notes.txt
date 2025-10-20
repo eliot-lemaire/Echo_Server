@@ -1,0 +1,188 @@
+TLS Fundamentals: Certificates, Handshakes, SNI & ALPN
+
+Create a CA. And sign a server's certification. Run a TLS server and observe the secure Handshake : SNI, ALPN
+
+CA : Certificate Authority, a trusted server that verifies if a server is legit.
+SNI : Server Name Indication, find the site if multiple sites are on one server
+ALPN : Application-Layer Protocol Negotiation, finds the correct Protocol of communicating with the client/server.
+TLS server : Transport Layer Security, encryptes data from server and client
+
+1) Generate a CA
+
+# Generate a 2048-bit RSA key for your CA
+openssl genrsa -out ca.key 2048
+
+# Create a self-signed CA certificate valid for 365 days
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 365 -out ca.crt -subj "/CN=My-Lab-CA"
+
+2) Generate a cert for your server
+
+# Generate a 2048-bit RSA key for your server
+openssl genrsa -out server.key 2048
+
+# Create a Certificate Signing Request (CSR)
+openssl req -new -key server.key -out server.csr -subj "/CN=localhost"
+
+3) Sign the Server Certificate with Your CA
+
+# Sign the server CSR, creating the final certificate
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -sha256
+
+4) Start the TLS Server
+
+openssl s_server -accept 8443 -cert server.crt -key server.key -WWW -tlsextdebug
+
+5) Inspect the connection from a client
+
+openssl s_client -connect localhost:8443 -CAfile ca.crt -servername localhost -alpn "h2,http/1.1"
+
+PASTE FROM THE SERVER :
+
+Using default temp DH parameters
+ACCEPT
+
+TLS client extension "server name" (id=0), len=14
+0000 - 00 0c 00 00 09 6c 6f 63-61 6c 68 6f 73 74         .....localhost
+TLS client extension "EC point formats" (id=11), len=4
+0000 - 03 00 01 02                                       ....
+TLS client extension "supported_groups" (id=10), len=22
+0000 - 00 14 00 1d 00 17 00 1e-00 19 00 18 01 00 01 01   ................
+0010 - 01 02 01 03 01 04                                 ......
+TLS client extension "session ticket" (id=35), len=0
+TLS client extension "application layer protocol negotiation" (id=16), len=14
+0000 - 00 0c 02 68 32 08 68 74-74 70 2f 31 2e 31         ...h2.http/1.1
+TLS client extension "encrypt-then-mac" (id=22), len=0
+TLS client extension "extended master secret" (id=23), len=0
+TLS client extension "signature algorithms" (id=13), len=42
+0000 - 00 28 04 03 05 03 06 03-08 07 08 08 08 09 08 0a   .(..............
+0010 - 08 0b 08 04 08 05 08 06-04 01 05 01 06 01 03 03   ................
+0020 - 03 01 03 02 04 02 05 02-06 02                     ..........
+TLS client extension "supported versions" (id=43), len=5
+0000 - 04 03 04 03 03                                    .....
+TLS client extension "psk kex modes" (id=45), len=2
+0000 - 01 01                                             ..
+TLS client extension "key share" (id=51), len=38
+0000 - 00 24 00 1d 00 20 0d f0-90 06 85 ac bd bd f4 af   .$... ..........
+0010 - 2e 08 89 7e 20 97 15 a0-49 87 cc a7 ef 11 c2 f2   ...~ ...I.......
+0020 - 4f b4 ae a6 65 02                                 O...e.
+
+PASTE FROM THE CLIENT : 
+
+CONNECTED(00000003)
+depth=1 CN = My-Lab-CA
+verify return:1
+depth=0 CN = localhost
+verify return:1
+---
+Certificate chain
+ 0 s:CN = localhost
+   i:CN = My-Lab-CA
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Oct  4 18:18:30 2025 GMT; NotAfter: Oct  4 18:18:30 2026 GMT
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIICrzCCAZcCFDfSQIMV6bQXU9sPi8whbuYaoUddMA0GCSqGSIb3DQEBCwUAMBQx
+EjAQBgNVBAMMCU15LUxhYi1DQTAeFw0yNTEwMDQxODE4MzBaFw0yNjEwMDQxODE4
+MzBaMBQxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEP
+ADCCAQoCggEBALSa5K2O6f940BVwQUN7wxIt5zk/YFw8jxVzRmseDShUSvBwYokD
+C/Mn5l0A6gbIWXUpe1zq6LHmNPXjUpt93ZCliuwa//hILI2ekLLxCr3hpTSDBdbv
++lFm3leFNKDlBQL1RasDgBfM9PDFfgoUtD3JGI2fdJ+IpxkAY1Q1+P57aAO66q+m
+LIYkHU13AxLmQiRjnUEQg2MZnuLbiqm9y+6bRDNpaVMKLPFmTSlvvm8bZeMCk1MQ
+l8CFo0MnEPyAGem/tI/HsQrZj6GfhyM7nUEWRRlfMmgXs3vpxONUE/GJaf+PB5pH
+hDzQcluS48qxtVjR4anmquxhT+rjYgLIRUUCAwEAATANBgkqhkiG9w0BAQsFAAOC
+AQEAaB5a/XtgLS0orFrNu/Pt6am+DcN4z3v07IXXfhrudJzQlbK3tuTsEVmqwbJe
+UwWsHbzdkaLSMbfKV7k+bouxBzEfCt/u0S+fxDIw0WdYLz1fBEKhTF5T5EtVU2qh
+T3z0wAfdByzTymIRdk/MxYFW7Zc+WICND8UmAaunimh2h4adKcY+PrwSmIcb2rVy
+OSBrj3cxu3y1Vxd1t7qPLH4n6zIRJ51cKLCThr8mkLaOZ5yemMbd1/Sw3bzf/8nQ
+Ao0nqOzGp3q3rwe8O97EnhicZCz2yxXcmxGyGLvlWcKqISZbDTu5fmWY4q0SM/ak
+4iOCOOA2pjcPmXaSKszDWcdpDw==
+-----END CERTIFICATE-----
+subject=CN = localhost
+issuer=CN = My-Lab-CA
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: RSA-PSS
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 1247 bytes and written 409 bytes
+Verification: OK
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Server public key is 2048 bit
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+Early data was not sent
+Verify return code: 0 (ok)
+---
+---
+Post-Handshake New Session Ticket arrived:
+SSL-Session:
+    Protocol  : TLSv1.3
+    Cipher    : TLS_AES_256_GCM_SHA384
+    Session-ID: 1208D3B692C7AE8D548AF81588191165BD792316A941E6C5B664177831C950CB
+    Session-ID-ctx: 
+    Resumption PSK: 8EA849972482834BCBA0D4BFBF030889CBBEAF97017B24E642D54D7F4B7FCEA697D26E7EE467C3BE77D4712D45C539CD
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 7200 (seconds)
+    TLS session ticket:
+    0000 - 56 ca 71 70 f8 f7 73 54-8f 42 3d 12 4b 78 55 81   V.qp..sT.B=.KxU.
+    0010 - dd 77 b1 e7 3d f3 23 03-cb c2 c1 db b6 b2 d8 e2   .w..=.#.........
+    0020 - 16 63 70 ae ef 2e ed 17-a4 29 a4 c9 49 45 c2 f6   .cp......)..IE..
+    0030 - 1f fa 51 db b5 f1 1f 45-18 61 0d dd 0f d7 7a 12   ..Q....E.a....z.
+    0040 - aa 15 75 79 cd 6b 3b e3-41 a1 4a ac e0 c3 bf 3b   ..uy.k;.A.J....;
+    0050 - b2 c0 6d 45 50 e3 b8 4b-a3 c4 6a 0e 70 f1 5c 17   ..mEP..K..j.p.\.
+    0060 - 61 02 e4 12 22 4f af c2-88 d4 21 b8 66 8b 4a 45   a..."O....!.f.JE
+    0070 - e6 59 a4 5b dd fa c2 07-34 da a8 0b 26 f6 94 e9   .Y.[....4...&...
+    0080 - 64 01 b2 d2 e2 db 45 90-cb bc 23 d4 ba b3 ca d8   d.....E...#.....
+    0090 - 06 ba da a9 df 9d 98 6e-6f 3b 78 8f 19 dd 0f f1   .......no;x.....
+    00a0 - 43 f3 84 0e 72 a1 fb b5-05 f3 2c dc e1 2f 18 25   C...r.....,../.%
+    00b0 - 17 ef 45 15 c6 f5 0d d5-a3 d8 90 b5 2a d8 3a ca   ..E.........*.:.
+    00c0 - 8a 7d c8 8f 48 a4 2d a2-39 0e 2f c3 08 6c 63 6f   .}..H.-.9./..lco
+
+    Start Time: 1759602616
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+    Max Early Data: 0
+---
+read R BLOCK
+---
+Post-Handshake New Session Ticket arrived:
+SSL-Session:
+    Protocol  : TLSv1.3
+    Cipher    : TLS_AES_256_GCM_SHA384
+    Session-ID: E832FDDF6236EFE11A01275CDF0E37128EC432A5570FC4B8CF1797C4923CAD26
+    Session-ID-ctx: 
+    Resumption PSK: 07684DF6CA41209F3CA6AA7E24565FBE9EE030A61F8AC77A11DAA5045D46A98160E389FA855A92F9CBDC427929E1BC22
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 7200 (seconds)
+    TLS session ticket:
+    0000 - 56 ca 71 70 f8 f7 73 54-8f 42 3d 12 4b 78 55 81   V.qp..sT.B=.KxU.
+    0010 - 2c f6 b4 58 70 a8 70 05-31 e7 29 47 c8 b9 a3 2b   ,..Xp.p.1.)G...+
+    0020 - 30 61 d8 66 c2 5c be e5-43 43 32 7a fe 51 48 0d   0a.f.\..CC2z.QH.
+    0030 - cd f7 c8 a9 1c d9 e2 71-74 40 de 31 09 75 38 92   .......qt@.1.u8.
+    0040 - ee 67 48 31 79 27 33 41-23 c7 2b 61 bc cc ac 0b   .gH1y'3A#.+a....
+    0050 - 3a 3d a9 00 ee 6b 4d 69-c0 cf fd 5f 0c d1 28 36   :=...kMi..._..(6
+    0060 - c9 fe 30 7c 69 e9 f6 61-3f 18 93 08 2f bf 22 13   ..0|i..a?.../.".
+    0070 - 8a 37 29 2b ac bc a0 54-7e 49 f6 b6 61 94 08 80   .7)+...T~I..a...
+    0080 - 75 d2 52 d0 a5 2b 34 f0-39 4a 87 53 f1 de db 55   u.R..+4.9J.S...U
+    0090 - 17 a5 68 d3 95 2e 75 10-64 05 b8 42 d4 6b 9c 98   ..h...u.d..B.k..
+    00a0 - c8 57 2a 33 2a 45 1f 24-eb 64 07 3a 7c 99 68 f6   .W*3*E.$.d.:|.h.
+    00b0 - ed 42 95 91 1d 31 3a e1-c8 68 64 d2 4c 21 eb c7   .B...1:..hd.L!..
+    00c0 - 6f 9e 47 8d 00 ad b5 e9-df e2 d0 33 17 54 cb de   o.G........3.T..
+
+    Start Time: 1759602616
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+    Max Early Data: 0
+---
+read R BLOCK

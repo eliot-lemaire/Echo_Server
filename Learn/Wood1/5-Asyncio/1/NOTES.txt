@@ -1,0 +1,19 @@
+Learn how two programs communicate over a network using TCP and Python's basic socket module. Create a simple server that handles one client at a time.
+
+Commands
+
+# Terminal 1 - Run the server
+python3 blocking_echo.py
+
+# Terminal 2 - Test the server
+printf 'hello\n' | nc 127.0.0.1 9001
+
+    Explain what a socket is in client-server communication.
+
+    Create a TCP server that binds to an address and port.
+
+    Accept a client connection and exchange data.
+
+    Run the server and connect to it using nc (netcat).
+
+    Identify the key differences between client and server socket usage.

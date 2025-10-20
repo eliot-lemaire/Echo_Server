@@ -1,0 +1,86 @@
+HTTP/1.1 is a text-based protocol running over TCP.
+
+Look like this: 
+
+GET / HTTP/1.1\r\n
+Host: example.com\r\n
+Connection: close\r\n
+\r\n
+
+1) start a backend 
+
+docker run -d --name backend -p 8080:80 nginx
+
+2) Manually make a HTTP request
+
+printf 'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' | nc localhost 8080
+
+3) Capture the traffic with
+
+sudo tcpdump -i any -w http_raw.pcap tcp port 8080
+
+4) View output with 
+
+tcpdump -r http_raw.pcap -n -vv
+
+OUTPUT
+
+reading from file http_raw.pcap, link-type LINUX_SLL2 (Linux cooked v2), snapshot length 262144
+Warning: interface names might be incorrect
+22:53:27.506060 lo    In  IP (tos 0x0, ttl 64, id 45918, offset 0, flags [DF], proto TCP (6), length 60)
+    127.0.0.1.39248 > 127.0.0.1.8080: Flags [S], cksum 0xfe30 (incorrect -> 0x5be1), seq 2248350213, win 65495, options [mss 65495,sackOK,TS val 3572287050 ecr 0,nop,wscale 7], length 0
+22:53:27.506086 lo    In  IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto TCP (6), length 60)
+    127.0.0.1.8080 > 127.0.0.1.39248: Flags [S.], cksum 0xfe30 (incorrect -> 0xdca0), seq 3560312781, ack 2248350214, win 65483, options [mss 65495,sackOK,TS val 3572287050 ecr 3572287050,nop,wscale 7], length 0
+22:53:27.506116 lo    In  IP (tos 0x0, ttl 64, id 45919, offset 0, flags [DF], proto TCP (6), length 52)
+    127.0.0.1.39248 > 127.0.0.1.8080: Flags [.], cksum 0xfe28 (incorrect -> 0x035d), seq 1, ack 1, win 512, options [nop,nop,TS val 3572287050 ecr 3572287050], length 0
+22:53:27.506279 lo    In  IP (tos 0x0, ttl 64, id 45920, offset 0, flags [DF], proto TCP (6), length 106)
+    127.0.0.1.39248 > 127.0.0.1.8080: Flags [P.], cksum 0xfe5e (incorrect -> 0xde48), seq 1:55, ack 1, win 512, options [nop,nop,TS val 3572287050 ecr 3572287050], length 54: HTTP, length: 54
+	GET / HTTP/1.1
+	Host: localhost
+	Connection: close
+	
+22:53:27.506304 lo    In  IP (tos 0x0, ttl 64, id 33807, offset 0, flags [DF], proto TCP (6), length 52)
+    127.0.0.1.8080 > 127.0.0.1.39248: Flags [.], cksum 0xfe28 (incorrect -> 0x0327), seq 1, ack 55, win 512, options [nop,nop,TS val 3572287050 ecr 3572287050], length 0
+22:53:27.508632 lo    In  IP (tos 0x0, ttl 64, id 33808, offset 0, flags [DF], proto TCP (6), length 900)
+    127.0.0.1.8080 > 127.0.0.1.39248: Flags [P.], cksum 0x0179 (incorrect -> 0x3f26), seq 1:849, ack 55, win 512, options [nop,nop,TS val 3572287052 ecr 3572287050], length 848: HTTP, length: 848
+	HTTP/1.1 200 OK
+	Server: nginx/1.29.1
+	Date: Sat, 27 Sep 2025 20:53:27 GMT
+	Content-Type: text/html
+	Content-Length: 615
+	Last-Modified: Wed, 13 Aug 2025 14:33:41 GMT
+	Connection: close
+	ETag: "689ca245-267"
+	Accept-Ranges: bytes
+	
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<title>Welcome to nginx!</title>
+	<style>
+	html { color-scheme: light dark; }
+	body { width: 35em; margin: 0 auto;
+	font-family: Tahoma, Verdana, Arial, sans-serif; }
+	</style>
+	</head>
+	<body>
+	<h1>Welcome to nginx!</h1>
+	<p>If you see this page, the nginx web server is successfully installed and
+	working. Further configuration is required.</p>
+	
+	<p>For online documentation and support please refer to
+	<a href="http://nginx.org/">nginx.org</a>.<br/>
+	Commercial support is available at
+	<a href="http://nginx.com/">nginx.com</a>.</p>
+	
+	<p><em>Thank you for using nginx.</em></p>
+	</body>
+	</html>
+22:53:27.508683 lo    In  IP (tos 0x0, ttl 64, id 45921, offset 0, flags [DF], proto TCP (6), length 52)
+    127.0.0.1.39248 > 127.0.0.1.8080: Flags [.], cksum 0xfe28 (incorrect -> 0xffd8), seq 55, ack 849, win 506, options [nop,nop,TS val 3572287052 ecr 3572287052], length 0
+22:53:27.508883 lo    In  IP (tos 0x0, ttl 64, id 33809, offset 0, flags [DF], proto TCP (6), length 52)
+    127.0.0.1.8080 > 127.0.0.1.39248: Flags [F.], cksum 0xfe28 (incorrect -> 0xffd1), seq 849, ack 55, win 512, options [nop,nop,TS val 3572287052 ecr 3572287052], length 0
+22:53:27.508964 lo    In  IP (tos 0x0, ttl 64, id 45922, offset 0, flags [DF], proto TCP (6), length 52)
+    127.0.0.1.39248 > 127.0.0.1.8080: Flags [F.], cksum 0xfe28 (incorrect -> 0xffd5), seq 55, ack 850, win 506, options [nop,nop,TS val 3572287053 ecr 3572287052], length 0
+22:53:27.508993 lo    In  IP (tos 0x0, ttl 64, id 33810, offset 0, flags [DF], proto TCP (6), length 52)
+    127.0.0.1.8080 > 127.0.0.1.39248: Flags [.], cksum 0xfe28 (incorrect -> 0xffce), seq 850, ack 56, win 512, options [nop,nop,TS val 3572287053 ecr 3572287053], length 0

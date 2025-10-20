@@ -1,0 +1,12 @@
+import socket
+s = socket.socket()
+s.bind(('127.0.0.1', 9000))
+s.listen(1)
+print("Server listening on 127.0.0.1:9000")
+conn, addr = s.accept()
+print(f"Connection from {addr}")
+data = conn.recv(1024)
+print(f"Received: {data}")
+conn.sendall(b'ACK')
+conn.close()
+s.close()
