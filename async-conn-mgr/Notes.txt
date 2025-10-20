@@ -1,9 +1,0 @@
-Event loop : Loop which handles async functions. When we reach an await it will run another function in await for the responce.
-Non-Blocking I/O : Makes other processes run when waiting for a process to finish instead of stopping the program.
-TCP lifecycle : SYN (asks can we communicate) -> ARC SYN (Establishing handshake) -> ARC (Ready for communication)
-Gracefull shutdown: Shuts down when all the data has been drained and disconnects clients.
-
-For the warming up I opted for a simple weather fetching program to remind me of the basics had to look up the __main__ and the .gather.
-
-To create the basic echo server I heavily relied on a flowchart i made but i did no copy paste.
-
