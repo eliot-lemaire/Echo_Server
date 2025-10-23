@@ -31,8 +31,8 @@ class connectionManager:
 mgr = connectionManager()
 
 async def handle_client(reader, writer):
-    if not await mgr.add(writer):   # No clue bro
-        return
+    if not await mgr.add(writer):   # Here we are seeing if the function is true or false
+        return  # Breaks the function none of the rest runs
     addr = writer.get_extra_info("peername")
     print(f"New: {addr}")
     try:
@@ -58,7 +58,7 @@ async def handle_client(reader, writer):
 # No idea what main does
 
 async def main():
-    server = await asyncio.start_server(handle_client, "127.0.0.1", 9001)
+    server = await asyncio.start_server(handle_client, "127.0.0.1", 9000)
     loop = asyncio.get_running_loop()   # No clue 
     stop = asyncio.Event()  # What the bro
     def on_signal():
